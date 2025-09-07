@@ -1,14 +1,15 @@
 -- ======================================================
--- 📌 FPS THANHLONG - Mini Spam Button + Anti-Accessories
+-- 📌 FPS THANHLONG - Spam Items + Anti-Accessories (Mini UI)
 -- ======================================================
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
--- 🔹 XÓA PHỤ KIỆN CỦA BẠN
+-- ======================================================
+-- 🔹 XÓA PHỤ KIỆN CỦA BẠN KHI CHẾT/TÁI SINH
+-- ======================================================
 local function removeAllAccessoriesFromCharacter()
     local character = LocalPlayer.Character
     if not character then return end
@@ -23,22 +24,16 @@ local function removeAllAccessoriesFromCharacter()
 end
 
 LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(0.1)
-    for i = 1, 10 do
-        removeAllAccessoriesFromCharacter()
-        task.wait(0.1)
-    end
+    task.wait(0.2)
+    removeAllAccessoriesFromCharacter()
 end)
 if LocalPlayer.Character then
-    task.defer(function()
-        for i = 1, 10 do
-            removeAllAccessoriesFromCharacter()
-            task.wait(0.1)
-        end
-    end)
+    task.defer(removeAllAccessoriesFromCharacter)
 end
 
--- 🔹 ITEM CHO SPAM
+-- ======================================================
+-- 🔹 DANH SÁCH ITEM CHO SPAM
+-- ======================================================
 local allowedItems = {
     ["Tung Bat"] = true,
     ["Medusa's Head"] = true,
@@ -47,7 +42,9 @@ local allowedItems = {
     ["Bee Launcher"] = true
 }
 
--- 🔹 SPAM ITEM
+-- ======================================================
+-- 🔹 HỆ THỐNG SPAM ITEM
+-- ======================================================
 local InventorySpam = {running = false, delay = 0.1}
 
 function InventorySpam:Start()
@@ -91,13 +88,12 @@ end
 LocalPlayer.CharacterAdded:Connect(function()
     InventorySpam:Stop()
     task.wait(0.2)
-    for i = 1, 10 do
-        removeAllAccessoriesFromCharacter()
-        task.wait(0.1)
-    end
+    removeAllAccessoriesFromCharacter()
 end)
 
--- 🔹 ANTI-SPAM ACCESSORIES NGƯỜI KHÁC
+-- ======================================================
+-- 🔹 ANTI-SPAM ACCESSORIES (CHO NGƯỜI KHÁC)
+-- ======================================================
 local maxChangePerInterval = 2
 local lastCounts = {}
 
@@ -151,7 +147,9 @@ end)
 
 RunService.Heartbeat:Connect(checkPlayers)
 
--- 🔹 GUI MINI BUTTON
+-- ======================================================
+-- 🔹 MINI GUI - CHỈ CÒN NÚT SPAM + KHUNG ON/OFF
+-- ======================================================
 local old = playerGui:FindFirstChild("FPS_THANHLONG_PANEL")
 if old then old:Destroy() end
 
@@ -161,25 +159,27 @@ gui.ResetOnSpawn = false
 gui.Parent = playerGui
 
 local panel = Instance.new("Frame", gui)
-panel.BackgroundColor3 = Color3.fromRGB(28,28,28)
+panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
 panel.BorderSizePixel = 0
-Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 6)
-panel.Size = UDim2.new(0, 60, 0, 28)
+Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 8)
+panel.Size = UDim2.new(0, 120, 0, 40)
 
 local btn = Instance.new("TextButton", panel)
-btn.Size = UDim2.new(1, 0, 1, 0)
-btn.BackgroundTransparency = 1
+btn.Size = UDim2.new(0, 100, 0, 30)
+btn.Position = UDim2.new(0, 10, 0, 5)
+btn.BackgroundColor3 = Color3.fromRGB(28,28,28)
 btn.Text = "SPAM"
 btn.Font = Enum.Font.GothamBold
 btn.TextColor3 = Color3.fromRGB(255,255,255)
-btn.TextSize = 12
+btn.BorderSizePixel = 0
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
-local circle = Instance.new("Frame", panel)
-circle.Size = UDim2.new(0, 10, 0, 10)
-circle.Position = UDim2.new(1, -12, 0.5, -5)
+local circle = Instance.new("Frame", btn)
+circle.Size = UDim2.new(0, 12, 0, 12)
+circle.Position = UDim2.new(0, 5, 0.5, -6)
 circle.BackgroundColor3 = Color3.fromRGB(255,40,40)
 circle.BorderSizePixel = 0
-Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+Instance.new("UICorner", circle).CornerRadius = UDim.new(1,0)
 
 local state = false
 local function updateVisual()
@@ -197,7 +197,22 @@ btn.MouseButton1Click:Connect(function()
 end)
 updateVisual()
 
+-- ======================================================
+-- 🔹 VỊ TRÍ NÚT XUẤT HIỆN THẤP HƠN 2CM SO VỚI Ô ĐỒ
+-- ======================================================
+local function acomodarUI()
+    local screenSize = workspace.CurrentCamera.ViewportSize
+    local offset = 25 -- khoảng cách 2cm (~25px) từ khu vực đồ
+    panel.Position = UDim2.new(0.5, 0, 1, -offset)
+    panel.AnchorPoint = Vector2.new(0.5, 1)
+end
+
+acomodarUI()
+workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(acomodarUI)
+
+-- ======================================================
 -- 🔹 DRAG MINI PANEL
+-- ======================================================
 local dragging = false
 local dragStart, startPos
 
@@ -228,13 +243,3 @@ panel.InputChanged:Connect(function(input)
         end
     end
 end)
-
--- 🔹 AUTO-CENTER
-local function acomodarUI()
-    local screenSize = workspace.CurrentCamera.ViewportSize
-    panel.Position = UDim2.new(0.5, 0, 0.2, 0)
-    panel.AnchorPoint = Vector2.new(0.5, 0.5)
-end
-
-acomodarUI()
-workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(acomodarUI)
