@@ -1,14 +1,10 @@
--- ======================================================
--- 📌 FPS THANHLONG - Mini Spam Button + Anti-Accessories
--- ======================================================
-
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
--- 🔹 XÓA PHỤ KIỆN CỦA BẠN
+-- 🔹 XÓA PHỤ KIỆN CỦA BẠN KHI CHẾT/TÁI SINH
 local function removeAllAccessoriesFromCharacter()
     local character = LocalPlayer.Character
     if not character then return end
@@ -23,22 +19,14 @@ local function removeAllAccessoriesFromCharacter()
 end
 
 LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(0.1)
-    for i = 1, 10 do
-        removeAllAccessoriesFromCharacter()
-        task.wait(0.1)
-    end
+    task.wait(0.2)
+    removeAllAccessoriesFromCharacter()
 end)
 if LocalPlayer.Character then
-    task.defer(function()
-        for i = 1, 10 do
-            removeAllAccessoriesFromCharacter()
-            task.wait(0.1)
-        end
-    end)
+    task.defer(removeAllAccessoriesFromCharacter)
 end
 
--- 🔹 ITEM CHO SPAM
+-- 🔹 DANH SÁCH ITEM CHO SPAM
 local allowedItems = {
     ["Tung Bat"] = true,
     ["Medusa's Head"] = true,
@@ -47,7 +35,7 @@ local allowedItems = {
     ["Bee Launcher"] = true
 }
 
--- 🔹 SPAM ITEM
+-- 🔹 HỆ THỐNG SPAM ITEM
 local InventorySpam = {running = false, delay = 0.1}
 
 function InventorySpam:Start()
@@ -91,13 +79,10 @@ end
 LocalPlayer.CharacterAdded:Connect(function()
     InventorySpam:Stop()
     task.wait(0.2)
-    for i = 1, 10 do
-        removeAllAccessoriesFromCharacter()
-        task.wait(0.1)
-    end
+    removeAllAccessoriesFromCharacter()
 end)
 
--- 🔹 ANTI-SPAM ACCESSORIES NGƯỜI KHÁC
+-- 🔹 ANTI-SPAM ACCESSORIES (CHO NGƯỜI KHÁC)
 local maxChangePerInterval = 2
 local lastCounts = {}
 
@@ -151,7 +136,7 @@ end)
 
 RunService.Heartbeat:Connect(checkPlayers)
 
--- 🔹 GUI MINI BUTTON
+-- 🔹 GUI FPS THANHLONG (Thu Nhỏ)
 local old = playerGui:FindFirstChild("FPS_THANHLONG_PANEL")
 if old then old:Destroy() end
 
@@ -161,25 +146,35 @@ gui.ResetOnSpawn = false
 gui.Parent = playerGui
 
 local panel = Instance.new("Frame", gui)
-panel.BackgroundColor3 = Color3.fromRGB(28,28,28)
+panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
 panel.BorderSizePixel = 0
-Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 6)
-panel.Size = UDim2.new(0, 60, 0, 28)
+Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 8)
+
+local title = Instance.new("TextLabel", panel)
+title.Size = UDim2.new(1,0,0,20)
+title.Text = "FPS THANHLONG"
+title.Font = Enum.Font.GothamBold
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextSize = 14
 
 local btn = Instance.new("TextButton", panel)
-btn.Size = UDim2.new(1, 0, 1, 0)
-btn.BackgroundTransparency = 1
+btn.BackgroundColor3 = Color3.fromRGB(28,28,28)
 btn.Text = "SPAM"
 btn.Font = Enum.Font.GothamBold
 btn.TextColor3 = Color3.fromRGB(255,255,255)
+btn.BorderSizePixel = 0
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+btn.Size = UDim2.new(1, -20, 0, 28)
+btn.Position = UDim2.new(0, 10, 0, 25)
 btn.TextSize = 12
 
-local circle = Instance.new("Frame", panel)
-circle.Size = UDim2.new(0, 10, 0, 10)
-circle.Position = UDim2.new(1, -12, 0.5, -5)
+local circle = Instance.new("Frame", btn)
 circle.BackgroundColor3 = Color3.fromRGB(255,40,40)
 circle.BorderSizePixel = 0
 Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+circle.Size = UDim2.new(0,10,0,10)
+circle.Position = UDim2.new(0,3,0.5,-5)
 
 local state = false
 local function updateVisual()
@@ -197,10 +192,38 @@ btn.MouseButton1Click:Connect(function()
 end)
 updateVisual()
 
--- 🔹 DRAG MINI PANEL
+local velocityBox = Instance.new("TextBox", panel)
+velocityBox.PlaceholderText = tostring(InventorySpam.delay)
+velocityBox.Text = tostring(InventorySpam.delay)
+velocityBox.Font = Enum.Font.Gotham
+velocityBox.BackgroundColor3 = Color3.fromRGB(28,28,28)
+velocityBox.TextColor3 = Color3.fromRGB(255,255,255)
+velocityBox.BorderSizePixel = 0
+Instance.new("UICorner", velocityBox).CornerRadius = UDim.new(0, 5)
+velocityBox.Size = UDim2.new(1, -20, 0, 22)
+velocityBox.Position = UDim2.new(0, 10, 0, 60)
+velocityBox.TextSize = 12
+
+velocityBox.FocusLost:Connect(function()
+    local val = tonumber(velocityBox.Text)
+    if val and val > 0 then
+        InventorySpam.delay = val
+    else
+        velocityBox.Text = tostring(InventorySpam.delay)
+    end
+end)
+
+-- 🔹 CENTER & ADAPT PC/MOBILE
+local function acomodarUI()
+    panel.Position = UDim2.new(0.5,0,0.5,0)
+    panel.AnchorPoint = Vector2.new(0.5,0.5)
+end
+acomodarUI()
+workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(acomodarUI)
+
+-- 🔹 DRAG UNIVERSAL
 local dragging = false
 local dragStart, startPos
-
 panel.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or
        input.UserInputType == Enum.UserInputType.Touch then
@@ -215,7 +238,6 @@ panel.InputBegan:Connect(function(input)
         end)
     end
 end)
-
 panel.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or
        input.UserInputType == Enum.UserInputType.Touch then
@@ -228,13 +250,3 @@ panel.InputChanged:Connect(function(input)
         end
     end
 end)
-
--- 🔹 AUTO-CENTER
-local function acomodarUI()
-    local screenSize = workspace.CurrentCamera.ViewportSize
-    panel.Position = UDim2.new(0.5, 0, 0.2, 0)
-    panel.AnchorPoint = Vector2.new(0.5, 0.5)
-end
-
-acomodarUI()
-workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(acomodarUI)
