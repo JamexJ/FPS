@@ -43,8 +43,6 @@ local allowedItems = {
     ["Tung Bat"] = true,
     ["Medusa's Head"] = true,
     ["Laser Cape"] = true,
-    ["Taser Gun"] = true,
-    ["Bee Launcher"] = true
 }
 
 -- 🔹 SPAM ITEM
