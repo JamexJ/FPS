@@ -1,5 +1,5 @@
 -- ======================================================
--- 📌 FPS THANHLONG - Mini Spam Button + Anti-Accessories (Gộp + GUI Góc Trái)
+-- 📌 FPS THANHLONG - Mini Spam Button + Anti-Accessories (Góc phải, chiều cao nhỏ, phím tắt)
 -- ======================================================
 
 local Players = game:GetService("Players")
@@ -151,7 +151,7 @@ end)
 
 RunService.Heartbeat:Connect(checkPlayers)
 
--- 🔹 GUI MINI BUTTON (Góc trái, nút cao hơn)
+-- 🔹 GUI MINI BUTTON (Góc phải, chiều cao nhỏ)
 local old = playerGui:FindFirstChild("FPS_THANHLONG_PANEL")
 if old then old:Destroy() end
 
@@ -164,7 +164,7 @@ local panel = Instance.new("Frame", gui)
 panel.BackgroundColor3 = Color3.fromRGB(28,28,28)
 panel.BorderSizePixel = 0
 Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 6)
-panel.Size = UDim2.new(0, 60, 0, 40) -- tăng chiều cao
+panel.Size = UDim2.new(0, 60, 0, 28) -- chiều cao nhỏ
 
 local btn = Instance.new("TextButton", panel)
 btn.Size = UDim2.new(1, 0, 1, 0)
@@ -172,12 +172,11 @@ btn.BackgroundTransparency = 1
 btn.Text = "SPAM"
 btn.Font = Enum.Font.GothamBold
 btn.TextColor3 = Color3.fromRGB(255,255,255)
-btn.TextSize = 14
-btn.TextScaled = true
+btn.TextSize = 12
 
 local circle = Instance.new("Frame", panel)
-circle.Size = UDim2.new(0, 12, 0, 12)
-circle.Position = UDim2.new(1, -14, 0.5, -6)
+circle.Size = UDim2.new(0, 10, 0, 10)
+circle.Position = UDim2.new(1, -12, 0.5, -5)
 circle.BackgroundColor3 = Color3.fromRGB(255,40,40)
 circle.BorderSizePixel = 0
 Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
@@ -187,6 +186,7 @@ local function updateVisual()
     circle.BackgroundColor3 = state and Color3.fromRGB(50,255,60) or Color3.fromRGB(255,40,40)
 end
 
+-- 🔹 Toggle bằng nút GUI
 btn.MouseButton1Click:Connect(function()
     state = not state
     if state then
@@ -198,8 +198,8 @@ btn.MouseButton1Click:Connect(function()
 end)
 updateVisual()
 
--- 🔹 Đặt góc trái màn hình
-panel.Position = UDim2.new(0, 10, 0, 50)
+-- 🔹 Đặt góc phải màn hình
+panel.Position = UDim2.new(1, -70, 0, 50) -- cách phải 10px, cách trên 50px
 panel.AnchorPoint = Vector2.new(0, 0)
 
 -- 🔹 Drag panel
@@ -231,5 +231,19 @@ panel.InputChanged:Connect(function(input)
                 startPos.Y.Scale, startPos.Y.Offset + delta.Y
             )
         end
+    end
+end)
+
+-- 🔹 PHÍM TẮT SHIFT PHẢI để bật/tắt spam
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        state = not state
+        if state then
+            InventorySpam:Start()
+        else
+            InventorySpam:Stop()
+        end
+        updateVisual()
     end
 end)
