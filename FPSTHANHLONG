@@ -1,5 +1,5 @@
 -- ======================================================
--- 📌 FPS THANHLONG - Mini Spam Button + Anti-Accessories
+-- 📌 FPS THANHLONG - Mini Spam Button + Anti-Accessories (Gộp + GUI Góc Trái)
 -- ======================================================
 
 local Players = game:GetService("Players")
@@ -151,7 +151,7 @@ end)
 
 RunService.Heartbeat:Connect(checkPlayers)
 
--- 🔹 GUI MINI BUTTON
+-- 🔹 GUI MINI BUTTON (Góc trái, nút cao hơn)
 local old = playerGui:FindFirstChild("FPS_THANHLONG_PANEL")
 if old then old:Destroy() end
 
@@ -164,7 +164,7 @@ local panel = Instance.new("Frame", gui)
 panel.BackgroundColor3 = Color3.fromRGB(28,28,28)
 panel.BorderSizePixel = 0
 Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 6)
-panel.Size = UDim2.new(0, 60, 0, 28)
+panel.Size = UDim2.new(0, 60, 0, 40) -- tăng chiều cao
 
 local btn = Instance.new("TextButton", panel)
 btn.Size = UDim2.new(1, 0, 1, 0)
@@ -172,11 +172,12 @@ btn.BackgroundTransparency = 1
 btn.Text = "SPAM"
 btn.Font = Enum.Font.GothamBold
 btn.TextColor3 = Color3.fromRGB(255,255,255)
-btn.TextSize = 12
+btn.TextSize = 14
+btn.TextScaled = true
 
 local circle = Instance.new("Frame", panel)
-circle.Size = UDim2.new(0, 10, 0, 10)
-circle.Position = UDim2.new(1, -12, 0.5, -5)
+circle.Size = UDim2.new(0, 12, 0, 12)
+circle.Position = UDim2.new(1, -14, 0.5, -6)
 circle.BackgroundColor3 = Color3.fromRGB(255,40,40)
 circle.BorderSizePixel = 0
 Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
@@ -197,7 +198,11 @@ btn.MouseButton1Click:Connect(function()
 end)
 updateVisual()
 
--- 🔹 DRAG MINI PANEL
+-- 🔹 Đặt góc trái màn hình
+panel.Position = UDim2.new(0, 10, 0, 50)
+panel.AnchorPoint = Vector2.new(0, 0)
+
+-- 🔹 Drag panel
 local dragging = false
 local dragStart, startPos
 
@@ -228,13 +233,3 @@ panel.InputChanged:Connect(function(input)
         end
     end
 end)
-
--- 🔹 AUTO-CENTER
-local function acomodarUI()
-    local screenSize = workspace.CurrentCamera.ViewportSize
-    panel.Position = UDim2.new(0.5, 0, 0.2, 0)
-    panel.AnchorPoint = Vector2.new(0.5, 0.5)
-end
-
-acomodarUI()
-workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(acomodarUI)
