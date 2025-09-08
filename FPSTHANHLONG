@@ -232,10 +232,10 @@ panel.InputChanged:Connect(function(input)
     end
 end)
 
--- 🔹 PHÍM TẮT SHIFT PHẢI để bật/tắt spam
+-- 🔹 PHÍM TẮT ALT TRÁI để bật/tắt spam
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.RightShift then
+    if input.KeyCode == Enum.KeyCode.LeftAlt then
         state = not state
         if state then
             InventorySpam:Start()
