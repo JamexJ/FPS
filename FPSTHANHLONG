@@ -1,247 +1,155 @@
 -- ======================================================
--- 📌 FPS THANHLONG - Mini Spam Button + Anti-Accessories (Góc phải, chiều cao nhỏ, phím tắt)
+-- ⚡ WALL FUNCTION - Transparent House + Lift Platform (Brainrot Safe)
 -- ======================================================
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
 
--- 🔹 XÓA PHỤ KIỆN CỦA BẠN
-local function removeAllAccessoriesFromCharacter()
-    local character = LocalPlayer.Character
-    if not character then return end
-    for _, item in ipairs(character:GetChildren()) do
-        if item:IsA("Accessory") or item:IsA("LayeredClothing")
-           or item:IsA("Shirt") or item:IsA("ShirtGraphic")
-           or item:IsA("Pants") or item:IsA("BodyColors")
-           or item:IsA("CharacterMesh") then
-            pcall(function() item:Destroy() end)
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game:GetService("CoreGui")
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 120, 0, 30) -- nhỏ hơn
+ToggleButton.Position = UDim2.new(0.05, 0, 0.85, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Text = "WALL [OFF]"
+ToggleButton.Name = "WALLToggleButton" -- đổi tên nút
+ToggleButton.Parent = ScreenGui
+ToggleButton.Active = true
+ToggleButton.Draggable = true
+
+-- Trạng thái
+local enabled = false
+local platform = nil
+local originalTransparency = {}
+local elevatorConn = nil
+local extraLift = 2 -- số studs cho đầu xuyên trần
+
+-- Hàm kiểm tra part có nên làm mờ
+local function isHousePartTransparent(part)
+    local model = part:FindFirstAncestorOfClass("Model")
+    
+    -- Trừ Brainrot / pet / item nhặt được
+    if model then
+        if model:FindFirstChild("HumanoidRootPart") then
+            return false
+        end
+        for _, p in ipairs(model:GetDescendants()) do
+            if p:IsA("MeshPart") then
+                return false
+            end
         end
     end
-end
-
-LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(0.1)
-    for i = 1, 10 do
-        removeAllAccessoriesFromCharacter()
-        task.wait(0.1)
+    if part:FindFirstChild("CanPickup") and part.CanPickup.Value == true then
+        return false
     end
-end)
-if LocalPlayer.Character then
-    task.defer(function()
-        for i = 1, 10 do
-            removeAllAccessoriesFromCharacter()
-            task.wait(0.1)
-        end
-    end)
+
+    -- Nếu part tên là "Roof", "Ceiling" hoặc part bình thường của nhà => cho mờ
+    return true
 end
 
--- 🔹 ITEM CHO SPAM
-local allowedItems = {
-    ["Tung Bat"] = true,
-    ["Medusa's Head"] = true,
-    ["Laser Cape"] = true,
-}
+-- Hàm bật
+local function enableWall()
+    enabled = true
+    ToggleButton.Text = "WALL [ON]"
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
 
--- 🔹 SPAM ITEM
-local InventorySpam = {running = false, delay = 0.1}
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local head = char:WaitForChild("Head")
 
-function InventorySpam:Start()
-    if self.running then return end
-    self.running = true
-    self._stop = false
-    task.spawn(function()
-        while self.running and not self._stop do
-            local backpack = LocalPlayer:FindFirstChild("Backpack")
-            if backpack and LocalPlayer.Character then
-                for _, tool in ipairs(backpack:GetChildren()) do
-                    if not self.running then break end
-                    if tool:IsA("Tool") and allowedItems[tool.Name] then
-                        tool.Parent = LocalPlayer.Character
-                        task.wait(self.delay/2)
-                        tool.Parent = backpack
-                        task.wait(self.delay/2)
-                    end
-                end
+    -- Làm mờ nhà, trừ Brainrot / pet / item
+    for _, part in ipairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") and isHousePartTransparent(part) then
+            originalTransparency[part] = part.Transparency
+            part.LocalTransparencyModifier = 0.6
+        end
+    end
+
+    -- Spawn bệ vàng dưới chân
+    platform = Instance.new("Part")
+    platform.Size = Vector3.new(6, 1, 6)
+    platform.Anchored = true
+    platform.Color = Color3.fromRGB(255, 220, 0)
+    platform.Material = Enum.Material.Neon
+    platform.CanCollide = true
+    platform.CFrame = hrp.CFrame - Vector3.new(0, 4, 0)
+    platform.Parent = workspace
+
+    local stopY = nil
+
+    -- Thang máy
+    elevatorConn = RunService.RenderStepped:Connect(function()
+        if not (char and hrp and head and platform) then return end
+
+        if not stopY then
+            local rayOrigin = head.Position
+            local rayDirection = Vector3.new(0, 5, 0)
+            local raycastParams = RaycastParams.new()
+            raycastParams.FilterDescendantsInstances = {char, platform}
+            raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+            local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+
+            if result then
+                stopY = platform.Position.Y + (result.Position.Y - head.Position.Y) + extraLift
             else
-                task.wait(0.2)
+                platform.Position = platform.Position + Vector3.new(0, 0.2, 0)
             end
-        end
-    end)
-end
-
-function InventorySpam:Stop()
-    self.running = false
-    self._stop = true
-    local backpack = LocalPlayer:FindFirstChild("Backpack")
-    local char = LocalPlayer.Character
-    if backpack and char then
-        for _, tool in ipairs(char:GetChildren()) do
-            if tool:IsA("Tool") then
-                tool.Parent = backpack
-            end
-        end
-    end
-end
-
-LocalPlayer.CharacterAdded:Connect(function()
-    InventorySpam:Stop()
-    task.wait(0.2)
-    for i = 1, 10 do
-        removeAllAccessoriesFromCharacter()
-        task.wait(0.1)
-    end
-end)
-
--- 🔹 ANTI-SPAM ACCESSORIES NGƯỜI KHÁC
-local maxChangePerInterval = 2
-local lastCounts = {}
-
-local function countAllAccessories(character)
-    if not character then return 0 end
-    local count = 0
-    for _, obj in ipairs(character:GetChildren()) do
-        if obj:IsA("Tool") or obj:IsA("Accessory") or obj:IsA("LayeredClothing") then
-            count = count + 1
-        end
-    end
-    return count
-end
-
-local function removeAllAccessories(character)
-    if not character then return end
-    for _, obj in ipairs(character:GetChildren()) do
-        if obj:IsA("Tool") or obj:IsA("Accessory") or obj:IsA("LayeredClothing") then
-            pcall(function() obj:Destroy() end)
-        end
-    end
-end
-
-local function checkPlayers()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local currentCount = countAllAccessories(player.Character)
-            local lastCount = lastCounts[player] or 0
-
-            if currentCount - lastCount > maxChangePerInterval then
-                removeAllAccessories(player.Character)
-            end
-
-            lastCounts[player] = currentCount
-        end
-    end
-end
-
-Players.PlayerAdded:Connect(function(player)
-    lastCounts[player] = 0
-    player.CharacterAdded:Connect(function(char)
-        task.wait(0.2)
-        removeAllAccessories(char)
-        lastCounts[player] = countAllAccessories(char)
-    end)
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-    lastCounts[player] = nil
-end)
-
-RunService.Heartbeat:Connect(checkPlayers)
-
--- 🔹 GUI MINI BUTTON (Góc phải, chiều cao nhỏ)
-local old = playerGui:FindFirstChild("FPS_THANHLONG_PANEL")
-if old then old:Destroy() end
-
-local gui = Instance.new("ScreenGui")
-gui.Name = "FPS_THANHLONG_PANEL"
-gui.ResetOnSpawn = false
-gui.Parent = playerGui
-
-local panel = Instance.new("Frame", gui)
-panel.BackgroundColor3 = Color3.fromRGB(28,28,28)
-panel.BorderSizePixel = 0
-Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 6)
-panel.Size = UDim2.new(0, 60, 0, 28) -- chiều cao nhỏ
-
-local btn = Instance.new("TextButton", panel)
-btn.Size = UDim2.new(1, 0, 1, 0)
-btn.BackgroundTransparency = 1
-btn.Text = "SPAM"
-btn.Font = Enum.Font.GothamBold
-btn.TextColor3 = Color3.fromRGB(255,255,255)
-btn.TextSize = 12
-
-local circle = Instance.new("Frame", panel)
-circle.Size = UDim2.new(0, 10, 0, 10)
-circle.Position = UDim2.new(1, -12, 0.5, -5)
-circle.BackgroundColor3 = Color3.fromRGB(255,40,40)
-circle.BorderSizePixel = 0
-Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
-
-local state = false
-local function updateVisual()
-    circle.BackgroundColor3 = state and Color3.fromRGB(50,255,60) or Color3.fromRGB(255,40,40)
-end
-
--- 🔹 Toggle bằng nút GUI
-btn.MouseButton1Click:Connect(function()
-    state = not state
-    if state then
-        InventorySpam:Start()
-    else
-        InventorySpam:Stop()
-    end
-    updateVisual()
-end)
-updateVisual()
-
--- 🔹 Đặt góc phải màn hình
-panel.Position = UDim2.new(1, -70, 0, 50) -- cách phải 10px, cách trên 50px
-panel.AnchorPoint = Vector2.new(0, 0)
-
--- 🔹 Drag panel
-local dragging = false
-local dragStart, startPos
-
-panel.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or
-       input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = panel.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-panel.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or
-       input.UserInputType == Enum.UserInputType.Touch then
-        if dragging then
-            local delta = input.Position - dragStart
-            panel.Position = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
-        end
-    end
-end)
-
--- 🔹 PHÍM TẮT ALT TRÁI để bật/tắt spam
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.LeftAlt then
-        state = not state
-        if state then
-            InventorySpam:Start()
         else
-            InventorySpam:Stop()
+            if platform.Position.Y < stopY then
+                platform.Position = platform.Position + Vector3.new(0, 0.2, 0)
+            end
         end
-        updateVisual()
+    end)
+end
+
+-- Hàm tắt
+local function disableWall()
+    enabled = false
+    ToggleButton.Text = "WALL [OFF]"
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+
+    for part, _ in pairs(originalTransparency) do
+        if part and part.Parent then
+            part.LocalTransparencyModifier = 0
+        end
+    end
+    originalTransparency = {}
+
+    if elevatorConn then
+        elevatorConn:Disconnect()
+        elevatorConn = nil
+    end
+    if platform then
+        platform:Destroy()
+        platform = nil
+    end
+end
+
+-- Toggle GUI
+ToggleButton.MouseButton1Click:Connect(function()
+    if enabled then
+        disableWall()
+    else
+        enableWall()
     end
 end)
+
+-- Toggle phím PC (RightShift)
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        if enabled then
+            disableWall()
+        else
+            enableWall()
+        end
+    end
+end)
+
+disableWall()
